@@ -21,32 +21,16 @@ namespace StatusWorker {
         public async Task RunAsync() {
             while (true) {
                 await _logger.LogAsync("Starting metrics collection at {time}");
-
-                // 1. Считываем системные метрики
-                var cpu = ReadCpuLoad();
+                var cpu = await ReadCpuLoad();
                 var ram = ReadRamUsage();
                 var sd = ReadSdCardInfo();
-
-                // 2. Считываем процессы
                 var topProcesses = ReadTopCpuProcesses();
-
-                // 3. Считываем статусы сервисов
                 var services = ReadServiceStatuses();
-
-                // 4. Считываем статусы Docker контейнеров
                 var docker = ReadDockerContainers();
-
-                // 5. Считываем список прослушиваемых портов
                 var ports = ReadListeningPorts();
-
-                // 6. Собираем JSON
                 var json = BuildJson(cpu, ram, sd, topProcesses, services, docker, ports);
-
-                // 7. Публикуем в MQTT
                 await PublishToMqttAsync(json);
-
                 await _logger.LogAsync("Metrics collection finished");
-
                 await Task.Delay(TimeSpan.FromMinutes(5));
             }
         }
