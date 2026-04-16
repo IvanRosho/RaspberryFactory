@@ -1,0 +1,103 @@
+{
+  "timestamp": "2026-04-16T10:50:00Z",
+  "system": {
+    "cpu_load": 23.5,
+    "ram": {
+      "used_mb": 812,
+      "total_mb": 3900,
+      "free_mb": 3088
+    },
+    "sdcard": {
+      "partitions": [
+        {
+          "mount": "/",
+          "filesystem": "/dev/mmcblk0p2",
+          "size_mb": 29000,
+          "used_mb": 12000,
+          "available_mb": 17000,
+          "used_percent": 41
+        },
+        {
+          "mount": "/boot",
+          "filesystem": "/dev/mmcblk0p1",
+          "size_mb": 256,
+          "used_mb": 40,
+          "available_mb": 216,
+          "used_percent": 15
+        }
+      ]
+    }
+  },
+  "processes": {
+    "top_cpu": [
+      {
+        "pid": 1234,
+        "name": "postgres",
+        "cpu": 12.3,
+        "ram_mb": 150
+      },
+      {
+        "pid": 5678,
+        "name": "docker",
+        "cpu": 8.1,
+        "ram_mb": 90
+      }
+    ]
+  },
+  "services": {
+    "mosquitto": {
+      "status": "running",
+      "port": 1883,
+      "port_open": true
+    },
+    "wireguard": {
+      "status": "running",
+      "port": 81820,
+      "port_open": true
+    },
+    "wg_easy": {
+      "status": "running",
+      "port": 51821,
+      "port_open": true
+    },
+    "postgres": {
+      "status": "running",
+      "port": 5432,
+      "port_open": true
+    }
+  },
+  "docker": {
+    "containers": [
+      {
+        "id": "a1b2c3d4e5",
+        "name": "wg-easy",
+        "image": "weejewel/wg-easy:latest",
+        "status": "Up 3 hours",
+        "ports": "0.0.0.0:51821->51821/tcp",
+        "created": "2026-04-16T07:00:00Z"
+      },
+      {
+        "id": "f6g7h8i9j0",
+        "name": "postgres",
+        "image": "postgres:15",
+        "status": "Up 3 hours",
+        "ports": "0.0.0.0:5432->5432/tcp",
+        "created": "2026-04-16T07:00:00Z"
+      }
+    ]
+  },
+  "network": {
+    "listening_ports": [
+      {
+        "protocol": "tcp",
+        "port": 22,
+        "process": "sshd"
+      },
+      {
+        "protocol": "tcp",
+        "port": 1883,
+        "process": "mosquitto"
+      }
+    ]
+  }
+}
