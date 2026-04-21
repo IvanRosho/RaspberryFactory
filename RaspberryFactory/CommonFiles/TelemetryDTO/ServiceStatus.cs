@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CommonFiles.TelemertyDTO
-{
+namespace CommonFiles.TelemetryDTO {
     public class ServiceStatus
     {
         public string Status { get; set; } = "";

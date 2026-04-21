@@ -23,5 +23,7 @@ public partial class LogError
 
     public string Comment { get; set; }
 
-    public int? LineNumber { get; set; }
+    public int LineNumber { get; set; }
+
+    public DateTime TimeStamp { get; set; }
 }

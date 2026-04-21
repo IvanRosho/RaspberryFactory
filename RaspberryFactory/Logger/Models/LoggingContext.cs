@@ -29,6 +29,7 @@ public partial class LoggingContext : DbContext
                 .ValueGeneratedOnAdd()
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("ID");
+            entity.Property(e => e.TimeStamp).HasColumnType("timestamp without time zone");
         });
 
         modelBuilder.Entity<LogError>(entity =>
@@ -41,8 +42,10 @@ public partial class LoggingContext : DbContext
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("ID");
             entity.Property(e => e.Application).IsRequired();
+            entity.Property(e => e.LineNumber).HasDefaultValue(0);
             entity.Property(e => e.LogLevel).IsRequired();
             entity.Property(e => e.Text).IsRequired();
+            entity.Property(e => e.TimeStamp).HasColumnType("timestamp without time zone");
         });
 
         OnModelCreatingPartial(modelBuilder);

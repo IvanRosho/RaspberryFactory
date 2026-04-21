@@ -7,14 +7,14 @@ namespace Logger
     {
         Task LogErrorAsync(
             string message,
-            int? CallerLineNumberAttribute,
+            int CallerLineNumberAttribute = 0,
             LogLevel logLevel = LogLevel.Debug,
             string Application = "", 
             string File = "", 
             string CallerMemberName = "", 
             string Comment = ""); 
         Task LogExceptionAsync(Exception ex,
-            int? CallerLineNumberAttribute,
+            int CallerLineNumberAttribute = 0,
             string Application = "",
             string File = "",
             string CallerMemberName = "",
