@@ -1,0 +1,111 @@
+﻿@using CommonFiles.TelemetryDTO;
+@using CommonFiles;
+@page "/"
+<PageTitle>@(string.Format(CommonFiles.Properties.Resources.Format_Header, serviceTelemetry?.RaspberryName))</PageTitle>
+
+<h1 class="">@(string.Format(CommonFiles.Properties.Resources.Format_Header, serviceTelemetry?.RaspberryName))</h1>
+
+<MudAppBar>
+    <MudText Align="Align.Center" Color="Color.Primary">@(string.Format(CommonFiles.Properties.Resources.Format_DashboardTitle, IP, DateTime.Now.Date.ToString()))</MudText>
+</MudAppBar>
+<!-- #region Main Layout -->
+<!-- #region Top Layout (CPU + RAM + SD) -->
+<!-- #region CPU -->
+<MudItem xs="12" md="6">
+    <MudPaper Class="pa-4" Square="true" Elevation="3">
+        <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Baseline" Spacing="2" Class="mb-4">
+            <MudText Style="min-width: 80px;">@CommonFiles.Properties.Resources.label_CPU</MudText>
+            <MudProgressLinear Color="Color.Success" Size="Size.Large" Max="100" Min="0" Value="@(raspberryTelemetry?.System?.CpuLoad ?? 0)">
+                <MudText>@(raspberryTelemetry?.System?.CpuLoad ?? 0)</MudText>
+            </MudProgressLinear>
+        </MudStack>
+        <MudTable T="CommonFiles.TelemetryDTO.ProcessInfo"
+                  Items="@(raspberryTelemetry?.TopProcesses ?? Enumerable.Empty<ProcessInfo>())">
+            <HeaderContent>
+                <MudTh>@CommonFiles.Properties.Resources.label_PID      </MudTh>
+                <MudTh>@CommonFiles.Properties.Resources.label_Name     </MudTh>
+                <MudTh>@CommonFiles.Properties.Resources.label_CPULoad  </MudTh>
+                <MudTh>@CommonFiles.Properties.Resources.label_RAM_Used </MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="@CommonFiles.Properties.Resources.label_PID">@context.Pid</MudTd>
+                <MudTd DataLabel="@CommonFiles.Properties.Resources.label_Name">@context.Name</MudTd>
+                <MudTd DataLabel="@CommonFiles.Properties.Resources.label_CPULoad">@context.Cpu</MudTd>
+                <MudTd DataLabel="@CommonFiles.Properties.Resources.label_RAM_Used">@context.RamMb</MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudPaper>
+</MudItem>
+<!-- #endregion CPU-->
+<!-- #region RAM + SD -->
+<!-- #region RAM -->
+<!-- #endregion RAM-->
+<!-- #region SD -->
+<!-- #endregion SD-->
+<!-- #endregion RAM + SD-->
+<!-- #endregion Top Layout (CPU + RAM + SD)-->
+<!-- #region Servives + Docker + Ports -->
+<!-- #region Services -->
+<!-- #endregion Services-->
+<!-- #region Docker -->
+<!-- #endregion Docker-->
+<!-- #region Network -->
+<!-- #endregion Network-->
+<!-- #endregion Servives + Docker + Ports-->
+<!-- #endregion Main Layout-->
+
+@code {
+    CommonFiles.TelemetryDTO.ServicesTelemetry serviceTelemetry;
+    CommonFiles.TelemetryDTO.RaspberryTelemetry raspberryTelemetry;
+    public string IP = "192.168.1.1";
+    protected override async Task OnInitializedAsync() {
+        raspberryTelemetry = new() {
+                RaspberryName = "TestRaspberry",
+                Timestamp = DateTime.Now,
+                System = new() {
+                    CpuLoad = 38.4,
+                    Ram = new() {
+                        TotalMb = 32000,
+                        UsedMb = 8000,
+                        FreeMb = 24000
+                    },
+                    SdCard = new() {
+                        Partitions = new() {
+                        new(){Mount="/dev/mmcblk0p2", Filesystem="xtc", SizeMb=510, UsedMb=74, AvailableMb=437, UsedPercent=15},
+                        new(){ Mount="/dev/mmcblk0p1", Filesystem="xtc", SizeMb=28789, UsedMb=6345, AvailableMb=21240, UsedPercent=23},
+                        }
+                    }
+                },
+                TopProcesses = new() {
+                new() { Pid = 10363, Name="ps", Cpu=300, RamMb=0.0},
+                new() { Pid = 1145, Name="containerd", Cpu=0.1, RamMb=0.5},
+                new() { Pid = 3492, Name="postgres", Cpu=0.1, RamMb=0.5},
+                new() { Pid = 702, Name="NetworkManager", Cpu=0.1, RamMb=0.5},
+                new() { Pid = 1202, Name="dockerd", Cpu=0.1, RamMb=0.5},
+            },
+            };
+        serviceTelemetry = new() {
+                RaspberryName = "TestRaspberry",
+                Timestamp = DateTime.Now,
+                Services = new()
+                {
+                {"Mosquitto", new(){ Status="Active", Port=1883 , PortOpen=true} },
+                {"Docker", new(){ Status="Active", Port=0 , PortOpen=false} },
+                {"PostGres", new(){ Status="Active", Port=5432 , PortOpen=true} },
+                {"BadService", new(){ Status="Inactive", Port=22 , PortOpen=false} },
+            },
+                DockerContainers = new()
+                {
+                new(){ Id="7b0fc140421f", Name="ghcr.io/wg-easy/wg-easy", Image="docker-entrypoint.s…", Status="Up 24 hours (healthy)", Ports="0.0.0.0:51821->51821/tcp, :::51821->51821/tcp", Created="46 hours ago"},
+                new(){ Id="7b0fc140421b", Name="Test", Image="Image", Status="down", Ports="", Created="never"}
+            },
+                ListeningPorts = new()
+                {
+                new() { Protocol="tcp", Port=2222, Process="sshd"},
+                new() { Protocol="tcp", Port=12523, Process="bla"},
+                new() { Protocol="tcp", Port=1355, Process="asgegweg"},
+                new() { Protocol="udp", Port=56759, Process="asfasfasf"},
+            }
+            };
+    }
+}
