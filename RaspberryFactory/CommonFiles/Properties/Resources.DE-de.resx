@@ -120,10 +120,10 @@
   <data name="label_CPU" xml:space="preserve">
     <value>CPU</value>
   </data>
-  <data name="Format_DashboardTitle" xml:space="preserve">
+  <data name="Format_Header" xml:space="preserve">
     <value>Dashboard {0}</value>
   </data>
-  <data name="Format_Header" xml:space="preserve">
+  <data name="Format_DashboardTitle" xml:space="preserve">
     <value>Wilkommen! Your IP is {0}. Now is {1}</value>
   </data>
   <data name="label_PID" xml:space="preserve">

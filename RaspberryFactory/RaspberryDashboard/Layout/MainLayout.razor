@@ -1,11 +1,16 @@
-﻿@inherits LayoutComponentBase
+﻿@using RaspberryDashboard.Repository
+@inherits LayoutComponentBase    
+@inject NetworkInfoService Net
 
-<MudThemeProvider></MudThemeProvider>
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-<div class="page">
-    <main>
-        <article class="content px-4">
+<MudLayout Style="height:100vh;">
+    <MudMainContent Style="height:100%; overflow:hidden;">
+        <div class="dashboard">
             @Body
-        </article>
-    </main>
-</div>
+        </div>
+    </MudMainContent>
+</MudLayout>  

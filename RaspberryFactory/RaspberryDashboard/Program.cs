@@ -17,19 +17,14 @@ namespace RaspberryDashboard {
 
 
             builder.Services.AddMudServices();
-
-            var configSection = builder.Configuration.GetSection(nameof(SampleConfig));
-            builder.Services.Configure<SampleConfig>(configSection);
-
-            SampleConfig sc = new();
-            configSection.Bind(sc);
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(sc.WebServiceUrl) });
-
-            builder.Services.AddScoped<SampleRepository>();
-            builder.Services.AddScoped<SampleLogic>();
+            builder.Services.AddHttpClient();
+            builder.Services.AddSingleton<NetworkInfoService>();
+            builder.Services.AddMudServices();
+            builder.Services.AddScoped<LanguageService>();
 
             var host = builder.Build();
-
+            var net = host.Services.GetRequiredService<NetworkInfoService>();
+            await net.InitializeAsync();
             //Default-Culture setzen
             CultureInfo culture;
             var js = host.Services.GetRequiredService<IJSRuntime>();

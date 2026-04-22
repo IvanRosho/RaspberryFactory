@@ -1,4 +1,4 @@
-﻿using CommonFiles.TelemertyDTO;
+﻿using CommonFiles.TelemetryDTO;
 using Logger;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

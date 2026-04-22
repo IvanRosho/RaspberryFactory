@@ -11,5 +11,4 @@ namespace CommonFiles.TelemetryDTO {
         public int Port { get; set; }
         public bool PortOpen { get; set; }
     }
-
 }

@@ -61,7 +61,7 @@ namespace CommonFiles.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Dashboard.
+        ///   Looks up a localized string similar to Wilkommen! Your IP is {0}. Now is {1}.
         /// </summary>
         public static string Format_DashboardTitle {
             get {
@@ -70,7 +70,7 @@ namespace CommonFiles.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Wilkommen!.
+        ///   Looks up a localized string similar to Dashboard {0}.
         /// </summary>
         public static string Format_Header {
             get {
