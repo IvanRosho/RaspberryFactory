@@ -1,26 +1,31 @@
-﻿@using CommonFiles.TelemetryDTO;
+﻿@using CommonFiles.Config
+@using CommonFiles.TelemetryDTO;
 @using CommonFiles;
 @using RaspberryDashboard.Repository
+@using System.Text.Json
 @inject NetworkInfoService Net
-@inject LanguageService Lang
+@inject LanguageService Lang       
+@inject IJSRuntime JS
+@inject MqttConfig Mqtt       
+@inject TelemetryState Telemetry
 @page "/"
-<PageTitle>@(string.Format(CommonFiles.Properties.Resources.Format_Header, serviceTelemetry?.RaspberryName))</PageTitle>
+<PageTitle>@(string.Format(Properties.Resources.Format_Header, Telemetry.ServicesData?.RaspberryName))</PageTitle>
 
 <MudAppBar Color="Color.Tertiary">
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="w-100">
         <MudText Color="Color.Primary">
-            @string.Format(CommonFiles.Properties.Resources.Format_Header, serviceTelemetry?.RaspberryName)
+            @string.Format(Properties.Resources.Format_Header, Telemetry.ServicesData?.RaspberryName)
         </MudText>
         <MudText Color="Color.Primary" Class="mx-auto">
             @string.Format(
-            CommonFiles.Properties.Resources.Format_DashboardTitle,
+            Properties.Resources.Format_DashboardTitle,
                         Net.ExternalIp,
                         DateTime.Now.Date.ToShortDateString())
         </MudText>
         <div style="min-width:150px;"></div>
         <MudMenu Icon="@Icons.Material.Filled.Language" Color="Color.Inherit">
             @foreach (var lang in SupportedLanguages.All) {
-                <MudMenuItem OnClick="@(() => Lang.SetLanguage(lang.Code))" Color="@(Lang.CurrentLanguage == lang.Code ? Color.Primary : Color.Default)">
+                <MudMenuItem OnClick="@(async () => await Lang.SetLanguageAsync(lang.Code, JS))" Color="@(Lang.CurrentLanguage == lang.Code ? Color.Primary : Color.Default)">
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                         <img src="@lang.Flag" style="object-fit:cover;border-radius:2px;" />
                         <MudText>@lang.Label</MudText>
@@ -31,245 +36,236 @@
     </MudStack>
 </MudAppBar>
 <!-- #region Main Layout -->  
-    <MudGrid Class="dashboard-grid">
+<MudGrid Class="dashboard-grid">
     <!-- #region Top Layout (CPU + RAM + SD) -->
     <!-- #region CPU -->
-    <MudItem md="6" xs="12" lg="6">
-            <MudPaper Class="h-100 pa-2" Square="true" Elevation="3">
-        <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Baseline" Spacing="2" Class="mb-4">
-            <MudText Style="min-width: 80px;">@CommonFiles.Properties.Resources.label_CPU</MudText>
-            <MudProgressLinear Color="Color.Success" Size="Size.Large" Max="100" Min="0" Value="@(raspberryTelemetry?.System?.CpuLoad ?? 0)">
-                <MudText>@(raspberryTelemetry?.System?.CpuLoad ?? 0) %</MudText>
-            </MudProgressLinear>
-        </MudStack>
-        <MudTable Elevation="3" T="CommonFiles.TelemetryDTO.ProcessInfo"
-                  Items="@(raspberryTelemetry?.TopProcesses ?? Enumerable.Empty<ProcessInfo>())">
-            <HeaderContent>
-                <MudTh>@CommonFiles.Properties.Resources.label_PID      </MudTh>
-                <MudTh>@CommonFiles.Properties.Resources.label_Name     </MudTh>
-                <MudTh>@CommonFiles.Properties.Resources.label_CPULoad  </MudTh>
-                <MudTh>@CommonFiles.Properties.Resources.label_RAM_Used </MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="@CommonFiles.Properties.Resources.label_PID">@context.Pid</MudTd>
-                <MudTd DataLabel="@CommonFiles.Properties.Resources.label_Name">@context.Name</MudTd>
-                <MudTd DataLabel="@CommonFiles.Properties.Resources.label_CPULoad">@context.Cpu</MudTd>
-                <MudTd DataLabel="@CommonFiles.Properties.Resources.label_RAM_Used">@context.RamMb</MudTd>
-            </RowTemplate>
-        </MudTable>
-    </MudPaper>
+    <MudItem md="6" xs="12" lg="6" >
+        <MudPaper Class="pa-2 ma-2" Square="true" Elevation="3" Style="background-color:#F2F5FF;">
+            <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Baseline" Spacing="2" Class="mb-4">
+                <MudText Style="min-width: 80px;" Class="textHeader">@Properties.Resources.label_CPU</MudText>
+                <MudProgressLinear Class="custom-progress" Style=@($"--my-color:{ProgressBarValueToColor(Telemetry.RaspberryData?.System?.CpuLoad ?? 0)}")
+                                   Size="Size.Large" Max="100" Min="0" Striped="true" Value="@(Telemetry.RaspberryData?.System?.CpuLoad ?? 0)">
+                    <MudText Typo="Typo.subtitle2">@(Telemetry.RaspberryData?.System?.CpuLoad ?? 0) %</MudText>
+                </MudProgressLinear>
+            </MudStack>
+            <MudTable Elevation="3" T="CommonFiles.TelemetryDTO.ProcessInfo" Class="compact-table"
+                      Items="@(Telemetry.RaspberryData?.TopProcesses ?? Enumerable.Empty<ProcessInfo>())">
+                <HeaderContent>
+                    <MudTh>@Properties.Resources.label_PID</MudTh>
+                    <MudTh>@Properties.Resources.label_Name</MudTh>
+                    <MudTh>@Properties.Resources.label_CPULoad</MudTh>
+                    <MudTh>@Properties.Resources.label_RAM_Used</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="@Properties.Resources.label_PID">@context.Pid</MudTd>
+                    <MudTd DataLabel="@Properties.Resources.label_Name">@context.Name</MudTd>
+                    <MudTd DataLabel="@Properties.Resources.label_CPULoad">@context.Cpu</MudTd>
+                    <MudTd DataLabel="@Properties.Resources.label_RAM_Used">@context.RamMb</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
     </MudItem>
     <!-- #endregion CPU-->
     <!-- #region RAM + SD -->
     <MudItem md="6" xs="12" lg="6">
-        <!-- #region RAM -->
-            <MudPaper Class="h-100 pa-2" Square="true" Elevation="3">
+        <!-- RAM -->
+        <MudPaper Class="pa-2 ma-2 ram-section" Square="true" Elevation="3" Style="background-color:#F3FFF2;">
             <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Baseline" Spacing="2" Class="mb-4">
-                <MudText>@CommonFiles.Properties.Resources.label_RAM</MudText>
-                <MudProgressLinear Color="Color.Success" Size="Size.Large" Max="@(raspberryTelemetry?.System?.Ram?.TotalMb ?? 100)" Min="0" Value="@(raspberryTelemetry?.System?.Ram.UsedMb ?? 0)">
-                    <MudText>@(raspberryTelemetry?.System?.Ram.UsedMb ?? 0) Mb</MudText>
+                <MudText Class="textHeader">@Properties.Resources.label_RAM</MudText>
+                <MudProgressLinear 
+                    Value="@(Telemetry.RaspberryData?.System?.Ram.UsedMb ?? 0)"
+                                   Max="@(Telemetry.RaspberryData?.System?.Ram?.TotalMb ?? 100)" Striped="true"         Size="Size.Large"
+                                   Class="custom-progress" Style=@($"--my-color:{ProgressBarValueToColor(Telemetry.RaspberryData?.System?.Ram.UsedMb ?? 0, Telemetry.RaspberryData?.System?.Ram?.TotalMb ?? 100)}")>
+                    <MudText Typo="Typo.subtitle2">@(Telemetry.RaspberryData?.System?.Ram.UsedMb ?? 0) Mb</MudText>
                 </MudProgressLinear>
             </MudStack>
         </MudPaper>
-        <!-- #endregion RAM-->
-        <!-- #region SD -->
-        <MudPaper Class="pa-2" Square="true" Elevation="3">
-            <MudPaper Class="pa-2" Square="true" Elevation="3">
 
-                <MudText Class="mb-2">
-                    @CommonFiles.Properties.Resources.label_SDCard_header
-                </MudText>
-                <div style="display:flex; gap:16px; align-items:stretch;">
-                    <div style="flex: 0 0 25%; min-width: 180px;">
-                        <MudChart ChartType="ChartType.Pie"
-                                  LegendPosition="Position.Bottom"
-                                  ChartSeries="@(raspberryTelemetry?.System?.SdCard?.Partitions?.Select(s => s.SizeMb).ToArray().AsChartDataSet())"
-                                  ChartLabels="@raspberryTelemetry?.System?.SdCard?.Partitions?.Select(s => s.Mount).ToArray()" />
-                    </div>
-                    <div style="flex: 1 1 auto;">
-                        <MudTable Elevation="3"
-                                  T="CommonFiles.TelemetryDTO.SdPartition"
-                                  Items="@(raspberryTelemetry?.System?.SdCard?.Partitions
-                                      ?? Enumerable.Empty<SdPartition>())">
-                            <HeaderContent>
-                                <MudTh>@CommonFiles.Properties.Resources.label_SD_mount</MudTh>
-                                <MudTh>@CommonFiles.Properties.Resources.label_SD_filesystem</MudTh>
-                                <MudTh>@CommonFiles.Properties.Resources.label_SD_size</MudTh>
-                                <MudTh>@CommonFiles.Properties.Resources.label_SD_free</MudTh>
-                                <MudTh>@CommonFiles.Properties.Resources.label_SD_percent</MudTh>
-                            </HeaderContent>
-                            <RowTemplate Context="context">
-                                <MudTd>@context.Mount</MudTd>
-                                <MudTd>@context.Filesystem</MudTd>
-                                <MudTd>@context.SizeMb</MudTd>
-                                <MudTd>@context.AvailableMb</MudTd>
-                                <MudTd>
-                                    <MudProgressLinear Color="Color.Success" Size="Size.Large" Max="100" Min="0" Value="@context.UsedPercent">
-                                        <MudText>@context.UsedPercent</MudText>
-                                    </MudProgressLinear>
-                                </MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                    </div>
+        <!-- SD -->
+        <MudPaper Class="pa-2 ma-2 sd-container" Square="true" Elevation="3" Style="background-color:#F3FFF2;">
+            <MudText Class="mb-2 textHeader">
+                @Properties.Resources.label_SDCard_header
+            </MudText>
+
+            <div style="display:flex; gap:16px; align-items:stretch; height:100%;">
+                <div style="flex: 0 0 25%; min-width: 180px;">
+                    <MudChart ChartType="ChartType.Pie"
+                              LegendPosition="Position.Bottom"
+                              ChartSeries="@(Telemetry.RaspberryData?.System?.SdCard?.Partitions?.Select(s => s.SizeMb).ToArray().AsChartDataSet())"
+                              ChartLabels="@Telemetry.RaspberryData?.System?.SdCard?.Partitions?.Select(s => s.Mount).ToArray()" />
                 </div>
-            </MudPaper>
+
+                <div style="flex: 1 1 auto; overflow:auto;">
+                    <MudTable Elevation="3" Class="compact-table"
+                              T="CommonFiles.TelemetryDTO.SdPartition"
+                              Items="@(Telemetry.RaspberryData?.System?.SdCard?.Partitions
+                                                            ?? Enumerable.Empty<SdPartition>())">
+                        <HeaderContent>
+                            <MudTh>@Properties.Resources.label_SD_mount</MudTh>
+                            <MudTh>@Properties.Resources.label_SD_filesystem</MudTh>
+                            <MudTh>@Properties.Resources.label_SD_size</MudTh>
+                            <MudTh>@Properties.Resources.label_SD_free</MudTh>
+                            <MudTh>@Properties.Resources.label_SD_percent</MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="context">
+                            <MudTd>@context.Mount</MudTd>
+                            <MudTd>@context.Filesystem</MudTd>
+                            <MudTd>@context.SizeMb</MudTd>
+                            <MudTd>@context.AvailableMb</MudTd>
+                            <MudTd>
+                                <MudProgressLinear Class="custom-progress" Style=@($"--my-color:{ProgressBarValueToColor(@context.UsedPercent)}") Striped="true"
+                                                   Size="Size.Medium" Max="100" Min="0" Value="@context.UsedPercent">
+                                    <MudText Typo="Typo.subtitle2">@context.UsedPercent</MudText>
+                                </MudProgressLinear>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </div>
+            </div>
         </MudPaper>
-    <!-- #endregion SD-->
-    <!-- #endregion RAM + SD-->
     </MudItem>
     <!-- #endregion Top Layout (CPU + RAM + SD)-->
     <!-- #region Servives + Docker + Ports -->
     <!-- #region Services -->
     <MudItem md="6" lg="4">
-            <MudPaper Class="h-100 pa-2" Elevation="3">
-        <MudText>@CommonFiles.Properties.Resources.label_Services</MudText>
-        <MudTable Elevation="3" T="KeyValuePair<string, ServiceStatus>"
-          Items="@(serviceTelemetry.Services ?? new Dictionary<string, ServiceStatus>())">
-    <HeaderContent>
-        <MudTh></MudTh>
-        <MudTh>@CommonFiles.Properties.Resources.label_Name</MudTh>
-        <MudTh>@CommonFiles.Properties.Resources.label_services_port</MudTh>
-    </HeaderContent>
-    <RowTemplate Context="item">
-            <MudTd DataLabel="@CommonFiles.Properties.Resources.label_services_portStatus">
-                <MudTooltip Text="@item.Value.Status">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ServiceStatusToColor(item.Value.Status)" />
-                </MudTooltip>
-            </MudTd>
-            <MudTd DataLabel="@CommonFiles.Properties.Resources.label_Name">@item.Key</MudTd>
-            <MudTd DataLabel="@CommonFiles.Properties.Resources.label_services_port">
-                <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Baseline">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@(item.Value.PortOpen ? Color.Success : Color.Error)" />
-                    <MudText>@item.Value.Port</MudText>
-                </MudStack>
-            </MudTd>
-        </RowTemplate>
-    </MudTable>     
+        <MudPaper Class="pa-2 ma-2" Elevation="3" Style="background-color:#FFFAFA;">
+            <MudText Class="textHeader">@Properties.Resources.label_Services</MudText>
+            <MudTable Elevation="3" T="KeyValuePair<string, ServiceStatus>" Class="compact-table"
+                      Items="@(Telemetry.ServicesData?.Services ?? new Dictionary<string, ServiceStatus>())">
+                <HeaderContent>
+                    <MudTh></MudTh>
+                    <MudTh>@Properties.Resources.label_Name</MudTh>
+                    <MudTh>@Properties.Resources.label_services_port</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="item">
+                    <MudTd DataLabel="@Properties.Resources.label_services_portStatus">
+                        <MudTooltip Text="@item.Value.Status">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@ServiceStatusToColor(item.Value.Status)" />
+                        </MudTooltip>
+                    </MudTd>
+                    <MudTd DataLabel="@Properties.Resources.label_Name">@item.Key</MudTd>
+                        <MudTd DataLabel="@Properties.Resources.label_services_port">
+                        <MudStack Row="true" Justify="Justify.FlexStart">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Color="@(item.Value.PortOpen ? Color.Success : Color.Error)" />
+                            <MudText>@item.Value.Port</MudText>
+                        </MudStack>
+                    </MudTd>
+
+                </RowTemplate>
+            </MudTable>     
         </MudPaper>
-</MudItem>
+    </MudItem>
     <!-- #endregion Services-->
     <!-- #region Docker -->
     <!-- #endregion Docker-->   
     <MudItem md="6" lg="4">
-            <MudPaper Class="h-100 pa-2" Elevation="3">
-        <MudText>@CommonFiles.Properties.Resources.label_Docker</MudText>
-        <MudTable Elevation="3" T="CommonFiles.TelemetryDTO.DockerContainerInfo"
-              Items="@(serviceTelemetry?.DockerContainers ?? Enumerable.Empty<DockerContainerInfo>())"
-              Hover="true"
-              Bordered="true"
-              Striped="true">
-        <HeaderContent>
-            <MudTh></MudTh>
-            <MudTh>@CommonFiles.Properties.Resources.label_Docker_ID</MudTh>
-            <MudTh>@CommonFiles.Properties.Resources.label_Docker_Name</MudTh>
-        </HeaderContent>
-        <RowTemplate Context="item">
-            <MudTd>
-                <MudTooltip Text="@item.Status">
-                            <MudIconButton Icon="@Icons.Material.Filled.Circle" Color="@DockerStatusToColor(item.Status)" OnClick="@(() => Toggle(item))" />
-                </MudTooltip>
-            </MudTd>
-            <MudTd DataLabel="@CommonFiles.Properties.Resources.label_Docker_ID">@item.Id</MudTd>
-            <MudTd DataLabel="@CommonFiles.Properties.Resources.label_Docker_Name">@item.Name</MudTd>
-        </RowTemplate>
-        <ChildRowContent Context="item">
-            @if (IsExpanded(item)) {
-                <MudTr>
-                    <MudTd ColSpan="4">
-                        <MudPaper Class="pa-3">
-                            <MudText><b>@CommonFiles.Properties.Resources.label_Docker_ID:</b> @item.Id</MudText>
-                            <MudText><b>@CommonFiles.Properties.Resources.label_Docker_Name:</b> @item.Name</MudText>
-                            <MudText><b>@CommonFiles.Properties.Resources.label_Docker_image:</b> @item.Image</MudText>
-                            <MudText><b>@CommonFiles.Properties.Resources.label_Docker_status:</b> @item.Status</MudText>
-                            <MudText><b>@CommonFiles.Properties.Resources.label_Docker_ports:</b> @item.Ports</MudText>
-                            <MudText><b>@CommonFiles.Properties.Resources.label_Docker_created:</b> @item.Created</MudText>
-                        </MudPaper>
+        <MudPaper Class="pa-2 ma-2" Elevation="3" Style="background-color:#f0FFFF;">
+            <MudText Class="textHeader">@Properties.Resources.label_Docker</MudText>
+            <MudTable Elevation="3" T="CommonFiles.TelemetryDTO.DockerContainerInfo" Class="compact-table"
+                      Items="@(Telemetry.ServicesData?.DockerContainers ?? Enumerable.Empty<DockerContainerInfo>())"
+                  Hover="true"
+                  Bordered="true"
+                  Striped="true">
+                <HeaderContent>
+                    <MudTh></MudTh>
+                    <MudTh>@Properties.Resources.label_Docker_ID</MudTh>
+                    <MudTh>@Properties.Resources.label_Docker_Name</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="item">
+                    <MudTd>
+                        <MudTooltip Text="@item.Status">
+                            <MudAvatar Size="Size.Small" Color="@DockerStatusToColor(item.Status)">
+                                <MudIconButton Icon="@ExpandIcon(IsExpanded(item))" class="pa-0" OnClick="@(() => Toggle(item))" />
+                            </MudAvatar>
+                        </MudTooltip>
                     </MudTd>
-                </MudTr>
-            }
-        </ChildRowContent>
-    </MudTable>
-    </MudPaper>
-</MudItem>
+                    <MudTd DataLabel="@Properties.Resources.label_Docker_ID">@item.Id</MudTd>
+                    <MudTd DataLabel="@Properties.Resources.label_Docker_Name">@item.Name</MudTd>
+                </RowTemplate>
+                <ChildRowContent Context="item">
+                    @if (IsExpanded(item)) {
+                        <MudTr>
+                            <MudTd ColSpan="4">
+                                <MudPaper Class="pa-3" Style="background-color:transparent">
+                                    <MudText><b>@Properties.Resources.label_Docker_ID:</b> @item.Id</MudText>
+                                    <MudText><b>@Properties.Resources.label_Docker_Name:</b> @item.Name</MudText>
+                                    <MudText><b>@Properties.Resources.label_Docker_image:</b> @item.Image</MudText>
+                                    <MudText><b>@Properties.Resources.label_Docker_status:</b> @item.Status</MudText>
+                                    <MudText><b>@Properties.Resources.label_Docker_ports:</b> @item.Ports</MudText>
+                                    <MudText><b>@Properties.Resources.label_Docker_created:</b> @item.Created</MudText>
+                                </MudPaper>
+                            </MudTd>
+                        </MudTr>
+                    }
+                </ChildRowContent>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
     <!-- #region Network -->   
     <MudItem md="6" lg="4">
-            <MudPaper Class="h-100 pa-2" Elevation="3">
-        <MudText>@CommonFiles.Properties.Resources.label_Network</MudText>
-        <MudTable Elevation="3" T="CommonFiles.TelemetryDTO.ListeningPort"
-              Items="@(serviceTelemetry?.ListeningPorts ?? Enumerable.Empty<ListeningPort>())">
-        <HeaderContent>
-            <MudTh>@CommonFiles.Properties.Resources.label_Network_protocol</MudTh>
-            <MudTh>@CommonFiles.Properties.Resources.label_Network_port</MudTh>
-            <MudTh>@CommonFiles.Properties.Resources.label_Network_process</MudTh>
-        </HeaderContent>
-        <RowTemplate Context="item">
-            <MudTd DataLabel="@CommonFiles.Properties.Resources.label_Network_protocol">@item.Protocol</MudTd>
-            <MudTd DataLabel="@CommonFiles.Properties.Resources.label_Network_port">@item.Port</MudTd>
-            <MudTd DataLabel="@CommonFiles.Properties.Resources.label_Network_process">@item.Process</MudTd>
-        </RowTemplate>
-    </MudTable>
-    </MudPaper>
-</MudItem>
+        <MudPaper Class="pa-2 ma-2" Elevation="3" Style="background-color:#FFFFF0;">
+            <MudText Class="textHeader">@Properties.Resources.label_Network</MudText>
+            <MudTable Elevation="3" T="CommonFiles.TelemetryDTO.ListeningPort" Class="compact-table"
+                      Items="@(Telemetry.ServicesData?.ListeningPorts ?? Enumerable.Empty<ListeningPort>())">
+                <HeaderContent>
+                    <MudTh>@Properties.Resources.label_Network_protocol</MudTh>
+                    <MudTh>@Properties.Resources.label_Network_port</MudTh>
+                    <MudTh>@Properties.Resources.label_Network_process</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="item">
+                    <MudTd DataLabel="@Properties.Resources.label_Network_protocol">@item.Protocol</MudTd>
+                    <MudTd DataLabel="@Properties.Resources.label_Network_port">@item.Port</MudTd>
+                    <MudTd DataLabel="@Properties.Resources.label_Network_process">@item.Process</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
     <!-- #endregion Network-->
         <!-- #endregion Servives + Docker + Ports-->
 </MudGrid>
 <!-- #endregion Main Layout-->
 @code {
-        double[] data = { }; 
-        string[] labels = { };
-        CommonFiles.TelemetryDTO.ServicesTelemetry serviceTelemetry;
-        CommonFiles.TelemetryDTO.RaspberryTelemetry raspberryTelemetry;
-    public string IP = "192.168.1.1";
+    private DotNetObjectReference<Index>? objRef;
+    private bool _initialized = false;
+    RaspberryTelemetry raspberryTelemetry { get; set; }
+    ServicesTelemetry servicesTelemetry { get; set; }    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objRef = DotNetObjectReference.Create(this);
+
+            var url = $"ws://{Mqtt.Host}:{Mqtt.Port}";
+            var topic = Mqtt.Topic;
+
+            await JS.InvokeVoidAsync("mqttInterop.connect",
+                url,
+                topic,
+                objRef,
+                Mqtt.Username,
+                Mqtt.Password);
+
+            _initialized = true;
+        }
+    }
     protected override async Task OnInitializedAsync() {
         Lang.OnChange += StateHasChanged;
-        raspberryTelemetry = new() {
-                RaspberryName = "TestRaspberry",
-                Timestamp = DateTime.Now,
-                System = new() {
-                    CpuLoad = 38.4,
-                    Ram = new() {
-                        TotalMb = 32000,
-                        UsedMb = 8000,
-                        FreeMb = 24000
-                    },
-                    SdCard = new() {
-                        Partitions = new() {
-                        new(){Mount="/dev/mmcblk0p2", Filesystem="xtc", SizeMb=510, UsedMb=74, AvailableMb=437, UsedPercent=15},
-                        new(){ Mount="/dev/mmcblk0p1", Filesystem="xtc", SizeMb=28789, UsedMb=6345, AvailableMb=21240, UsedPercent=23},
-                        }
-                    }
-                },
-                TopProcesses = new() {
-                new() { Pid = 10363, Name="ps", Cpu=300, RamMb=0.0},
-                new() { Pid = 1145, Name="containerd", Cpu=0.1, RamMb=0.5},
-                new() { Pid = 3492, Name="postgres", Cpu=0.1, RamMb=0.5},
-                new() { Pid = 702, Name="NetworkManager", Cpu=0.1, RamMb=0.5},
-                new() { Pid = 1202, Name="dockerd", Cpu=0.1, RamMb=0.5},
-            },
-            };
-        serviceTelemetry = new() {
-                RaspberryName = "TestRaspberry",
-                Timestamp = DateTime.Now,
-                Services = new()
-                {
-                {"Mosquitto", new(){ Status="Active", Port=1883 , PortOpen=true} },
-                {"Docker", new(){ Status="Active", Port=0 , PortOpen=false} },
-                {"PostGres", new(){ Status="Active", Port=5432 , PortOpen=true} },
-                {"BadService", new(){ Status="Inactive", Port=22 , PortOpen=false} },
-            },
-                DockerContainers = new()
-                {
-                new(){ Id="7b0fc140421f", Name="ghcr.io/wg-easy/wg-easy", Image="docker-entrypoint.s…", Status="Up 24 hours (healthy)", Ports="0.0.0.0:51821->51821/tcp, :::51821->51821/tcp", Created="46 hours ago"},
-                new(){ Id="7b0fc140421b", Name="Test", Image="Image", Status="down", Ports="", Created="never"}
-            },
-                ListeningPorts = new()
-                {
-                new() { Protocol="tcp", Port=2222, Process="sshd"},
-                new() { Protocol="tcp", Port=12523, Process="bla"},
-                new() { Protocol="tcp", Port=1355, Process="asgegweg"},
-                new() { Protocol="udp", Port=56759, Process="asfasfasf"},
-            }
-            };
+        Telemetry.OnChange += StateHasChanged; 
+    }
+    [JSInvokable]
+    public void OnMqttMessage(string topic, string payload) {
+        Console.WriteLine($"MQTT: {topic} = {payload}");
+
+        if (topic.EndsWith(StaticNamen.MQTTSystemTopic)) {
+            var dto = JsonSerializer.Deserialize<RaspberryTelemetry>(payload);
+            if (dto != null)
+                Telemetry.UpdateSystem(dto);
+        }
+        else if (topic.EndsWith(StaticNamen.MQTTServicesTopic)) {
+            var dto = JsonSerializer.Deserialize<ServicesTelemetry>(payload);
+            if (dto != null)
+                Telemetry.UpdateServices(dto);
+        }
     }
     private HashSet<string> _expanded = new();
 
@@ -280,6 +276,11 @@
 
     private bool IsExpanded(DockerContainerInfo item) {
         return _expanded.Contains(item.Id);
+    }
+
+    private string ExpandIcon(bool isExpand)
+    {
+        return isExpand ? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown;
     }
 
     private Color ServiceStatusToColor(string status) {
@@ -295,5 +296,24 @@
         if (SuccessStatuses.Any(a=> status.Trim().ToLower().Contains(a))) return Color.Success;
         else if (ErrorStatuses.Any(a => status.Trim().ToLower().Contains(a))) return Color.Error;
         else return Color.Warning;
+    }
+
+    private string ProgressBarValueToColor(double value, double max = 100.0){
+        switch (value / max) {
+            case <= 0.25:
+                return "#69D8FF";
+            case <= 0.5:
+                return "#39DB24";
+            case <= 0.66:
+                return "#EEFF2E";
+            case <= 0.9:
+                return "#FF0000";
+            default:
+                return "#0101010";
+        }
+    }      
+    
+    public void Dispose() {
+        Telemetry.OnChange -= StateHasChanged;
     }
 }

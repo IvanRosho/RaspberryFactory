@@ -1,4 +1,5 @@
 ﻿namespace RaspberryDashboard.Repository {
+    using Microsoft.JSInterop;
     using System.Globalization;
     public class LanguageOption {
         public string Code { get; set; } = "";
@@ -17,17 +18,15 @@
         public event Action? OnChange;
         public string CurrentLanguage => CultureInfo.CurrentUICulture.Name;
         public IReadOnlyList<LanguageOption> AvailableLanguages => SupportedLanguages.All;
-        public void SetLanguage(string lang) {
+        public async Task SetLanguageAsync(string lang, IJSRuntime js) {
             var culture = new CultureInfo(lang);
             CultureInfo.CurrentCulture = culture;
             CultureInfo.CurrentUICulture = culture;
-            OnChange?.Invoke();
-        }
 
-        //public void Toggle() {
-        //    var index = Array.IndexOf(SupportedLanguages.All.Select(s=>s.Code), CurrentLanguage);
-        //    var next = SupportedLanguages.All[(index + 1 + SupportedLanguages.All.Length) % SupportedLanguages.All.Length];
-        //    SetLanguage(next);
-        //}
+            await js.InvokeVoidAsync("blazorCulture.set", lang);
+
+            OnChange?.Invoke();
+            await js.InvokeVoidAsync("location.reload");
+        }
     }
 }

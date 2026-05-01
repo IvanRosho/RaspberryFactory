@@ -1,4 +1,5 @@
-﻿using CommonFiles.TelemetryDTO;
+﻿using CommonFiles.Config;
+using CommonFiles.TelemetryDTO;
 using Logger;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -292,7 +293,7 @@ namespace StatusWorker {
                 var process = new System.Diagnostics.Process {
                     StartInfo = new System.Diagnostics.ProcessStartInfo {
                         FileName = "/bin/bash",
-                        Arguments = "-c \"ss -tulnp\"",
+                        Arguments = "-c \"sudo ss -tulnp\"",
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
                         CreateNoWindow = true
@@ -410,10 +411,10 @@ namespace StatusWorker {
                 }
                 var message = new MqttApplicationMessageBuilder()
                     .WithTopic($"{_mqttConfig.Topic}/{topic}")
-                    .WithPayload(json).WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
+                    .WithPayload(json).WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce).WithRetainFlag(true)
                     .Build();
                 await _mqttClient.PublishAsync(message);
-                await _logger.LogAsync($"Published MQTT message ({json.Length} bytes)");
+                await _logger.LogAsync($"Published MQTT message with Retain ({json.Length} bytes)");
             }
             catch (Exception ex) {
                 await _logger.LogAsync($"MQTT publish error: {ex.Message}");

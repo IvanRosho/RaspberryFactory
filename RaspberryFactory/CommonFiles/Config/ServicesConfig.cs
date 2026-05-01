@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StatusWorker
-{
+namespace CommonFiles.Config {
     public class ServicesConfig {
         public string Name { get; set; } = "";
         public string BashName { get; set; } = "";

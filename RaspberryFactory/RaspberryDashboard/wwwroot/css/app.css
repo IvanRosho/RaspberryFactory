@@ -111,26 +111,55 @@ code {
     flex-direction: column;
 }
 
-/* Desktop Behavior */
-@media (min-width: 960px) {
-    .dashboard-grid {
-        flex: 1;
+/* grid */
+.dashboard-grid {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    height: 100%;
+}
+
+    /* MudItem 50% height */
+    .dashboard-grid > .mud-grid-item {
+        height: 50%;
         display: flex;
         flex-direction: column;
     }
-    .dashboard-grid > .mud-grid-item:nth-child(-n+2) {
-        height: 50%;
-    }
-    .dashboard-grid > .mud-grid-item:nth-child(n+3) {
-        height: 50%;
-        overflow: hidden;
-    }
+
+/* Paper Scrollbarable */
+.dashboard-grid > .mud-grid-item > .mud-paper {
+    flex: 1;
+    overflow: auto;
 }
 
-.dashboard-grid .mud-grid-item {
-    display: flex;
+.mud-grid-item .ram-section {
+    flex: 0 0 auto !important;
 }
+
 .sd-container {
-    height: 100%;
+    flex: 1 1 auto;
     overflow: auto;
+}
+
+.compact-table {
+    background-color: transparent !important;
+}
+
+.compact-table .mud-table-cell,
+.compact-table .mud-table-header-cell {
+    padding: 4px 8px !important;
+    font-size: 0.85rem;
+}
+
+.compact-table .mud-table-row {
+    height: 28px;
+}
+
+.textHeader {
+    font-size: 28px !important;
+    font-family: 'Microsoft Sans Serif' !important;
+}
+
+.custom-progress .mud-progress-linear-bar {
+    background-color: var(--my-color) !important;
 }

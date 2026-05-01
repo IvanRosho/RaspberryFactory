@@ -1,12 +1,13 @@
+using CommonFiles;
+using CommonFiles.Config;
+using CommonFiles.TelemetryDTO;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MudBlazor.Services;
-using RaspberryDashboard.Config;
-using RaspberryDashboard.Logic;
 using RaspberryDashboard.Repository;
 using System.Globalization;
+using System.Text.Json;
 
 namespace RaspberryDashboard {
     public class Program {
@@ -15,12 +16,15 @@ namespace RaspberryDashboard {
             builder.RootComponents.Add<App>("#app");
             builder.RootComponents.Add<HeadOutlet>("head::after");
 
-
             builder.Services.AddMudServices();
             builder.Services.AddHttpClient();
             builder.Services.AddSingleton<NetworkInfoService>();
             builder.Services.AddMudServices();
-            builder.Services.AddScoped<LanguageService>();
+            builder.Services.AddScoped<LanguageService>(); 
+            var mqttConfig = new MqttConfig();
+            builder.Configuration.GetSection("Mqtt").Bind(mqttConfig); 
+            builder.Services.AddSingleton(mqttConfig); 
+            builder.Services.AddSingleton<TelemetryState>();
 
             var host = builder.Build();
             var net = host.Services.GetRequiredService<NetworkInfoService>();
@@ -40,7 +44,6 @@ namespace RaspberryDashboard {
 
             CultureInfo.DefaultThreadCurrentCulture = culture;
             CultureInfo.DefaultThreadCurrentUICulture = culture;
-
 
             await host.RunAsync();
         }

@@ -1,4 +1,5 @@
-﻿using Logger;
+﻿using CommonFiles.Config;
+using Logger;
 using Logger.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
