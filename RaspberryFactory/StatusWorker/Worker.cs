@@ -14,11 +14,13 @@ namespace StatusWorker {
         private readonly MqttConfig _mqttConfig;
         private readonly List<ServicesConfig> _listServicesConfigConfig;
         private IMqttClient? _mqttClient;
+        private readonly WorkerConfig WorkerConfig;
 
-        public Worker(ILogService logger, IOptions<MqttConfig> mqttOptions, List<ServicesConfig> listServicesConfigConfig) {
+        public Worker(ILogService logger, IOptions<MqttConfig> mqttOptions, List<ServicesConfig> listServicesConfigConfig, IOptions<WorkerConfig> mConfig) {
             _logger = logger;
             _mqttConfig = mqttOptions.Value;
             _listServicesConfigConfig = listServicesConfigConfig;
+            WorkerConfig = mConfig.Value;
         }
 
         public async Task RunServiceTelemetryAsync() {
@@ -30,7 +32,7 @@ namespace StatusWorker {
                 var json = BuildServicesJson(services, docker, ports);
                 await PublishToMqttAsync(json, CommonFiles.StaticNamen.MQTTServicesTopic);
                 await _logger.LogAsync($"Metrics collection finished");
-                await Task.Delay(TimeSpan.FromMinutes(5));
+                await Task.Delay(TimeSpan.FromSeconds(WorkerConfig.UpdateSystemInfo));
             }
         }
         public async Task RunRaspberryTelemetryAsync() {
@@ -43,7 +45,7 @@ namespace StatusWorker {
                 var json = BuildSystemJson(cpu, ram, sd, topProcesses);
                 await PublishToMqttAsync(json, CommonFiles.StaticNamen.MQTTSystemTopic);
                 await _logger.LogAsync($"Metrics collection finished");
-                await Task.Delay(TimeSpan.FromMinutes(1));
+                await Task.Delay(TimeSpan.FromSeconds(WorkerConfig.UpdateServiceInfo));
             }
         }
         private async Task<double> ReadCpuLoad() {
@@ -154,7 +156,7 @@ namespace StatusWorker {
                 var process = new System.Diagnostics.Process {
                     StartInfo = new System.Diagnostics.ProcessStartInfo {
                         FileName = "/bin/bash",
-                        Arguments = "-c \"ps -eo pid,comm,%cpu,%mem --sort=-%cpu | head -n 6\"",
+                        Arguments = $"-c \"ps -eo pid,comm,%cpu,%mem --sort=-%cpu | head -n {WorkerConfig.CountOfProcesses+1}\"",
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
                         CreateNoWindow = true
@@ -163,6 +165,7 @@ namespace StatusWorker {
                 process.Start();
                 var output = process.StandardOutput.ReadToEnd();
                 process.WaitForExit();
+                _logger.LogAsync($"Top {WorkerConfig.CountOfProcesses} Processes sucsessfylly readed.");
                 var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var line in lines.Skip(1)) {
                     var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);

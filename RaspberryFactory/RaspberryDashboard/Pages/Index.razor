@@ -23,6 +23,10 @@
                         DateTime.Now.Date.ToShortDateString())
         </MudText>
         <div style="min-width:150px;"></div>
+        <MudMenu Icon="@Icons.Material.Filled.Sync" Color="Color.Inherit">
+            <MudMenuItem Label=@string.Format(Properties.Resources.Format_LastUpdate_Proc, Telemetry.RaspberryData.Timestamp.ToString()) />
+            <MudMenuItem Label=@string.Format(Properties.Resources.Format_LastUpdate_Services, Telemetry.ServicesData.Timestamp.ToString()) />
+        </MudMenu>
         <MudMenu Icon="@Icons.Material.Filled.Language" Color="Color.Inherit">
             @foreach (var lang in SupportedLanguages.All) {
                 <MudMenuItem OnClick="@(async () => await Lang.SetLanguageAsync(lang.Code, JS))" Color="@(Lang.CurrentLanguage == lang.Code ? Color.Primary : Color.Default)">

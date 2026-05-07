@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36511.14
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11723.231 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StatusWorker", "StatusWorker\StatusWorker.csproj", "{5942159F-48F4-4001-8E5B-E65F9E4ED24B}"
 EndProject
@@ -10,6 +10,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonFiles", "CommonFiles\CommonFiles.csproj", "{F17A2145-844F-438E-8D6C-0A86E1CA861F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaspberryDashboard", "RaspberryDashboard\RaspberryDashboard.csproj", "{4FF715AD-EE8E-4C90-955A-51E28907E28A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CommonData", "CommonData", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		MarkDown.md = MarkDown.md
+		BuildActions.md = BuildActions.md
+		Services.md = Services.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

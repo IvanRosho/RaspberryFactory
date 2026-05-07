@@ -26,7 +26,8 @@ var host = Host.CreateDefaultBuilder(args)
             options.UseNpgsql(configuration.GetConnectionString("LogDb")));
         services.AddScoped<ILogService, LogService>();
         services.AddHostedService<LogBackgroundWorker>();
-        services.Configure<MqttConfig>(configuration.GetSection("Mqtt")); 
+        services.Configure<MqttConfig>(configuration.GetSection("Mqtt"));
+        services.Configure<WorkerConfig>(configuration.GetSection("Worker"));
         services.AddSingleton(sp => configuration.GetSection("Services").Get<List<ServicesConfig>>() ?? new List<ServicesConfig>());
 
         services.AddSingleton<Worker>();

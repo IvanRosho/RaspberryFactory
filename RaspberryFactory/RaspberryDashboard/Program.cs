@@ -28,6 +28,7 @@ namespace RaspberryDashboard {
 
             var host = builder.Build();
             var net = host.Services.GetRequiredService<NetworkInfoService>();
+
             await net.InitializeAsync();
             //Default-Culture setzen
             CultureInfo culture;

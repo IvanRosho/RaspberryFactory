@@ -225,4 +225,10 @@
   <data name="label_Network_process" xml:space="preserve">
     <value>Prozess</value>
   </data>
+  <data name="Format_LastUpdate_Proc" xml:space="preserve">
+    <value>Last Update System Info at {0}</value>
+  </data>
+  <data name="Format_LastUpdate_Services" xml:space="preserve">
+    <value>Last Update Services Info at {0}</value>
+  </data>
 </root>
